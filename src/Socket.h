@@ -36,16 +36,16 @@ public:
     ~Socket();
     
     //life cycle
-    void init(int fd, bool isOwner, int iFamily);
+    void init(int fd, bool isOwner = true, int iFamily = AF_INET);
     void close();
     void shutdown(int iHow);
     void create(int iSocketType, int iFamily);
     
     //private member interface
-    inline void setOwner(bool isOwner);
-    inline void setFamily(int iFamily);
-    inline int getfd();
-    inline bool isValid();
+    void setOwner(bool isOwner);
+    void setFamily(int iFamily);
+    int getfd();
+    bool isValid();
     
     //basic socket interface
     //void connect(const sockaddr& stServerAddr);
