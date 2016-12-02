@@ -9,32 +9,19 @@
 
 #include "Socket.h"
 #include "Http.h"
-#include "Crawler.h"
 
 void test_chat_client(const std::string& sAddr, const uint16_t uPort);
 void test_chat_server(const uint16_t uPort);
 void test_url();
 int  test_request(std::string sUrl, HttpResponse& stRsp, int iTimeout = 3000);
-void test_crawler();
 void test_lock();
 void test_rwlock();
-
-#include "SearchServer.h"
-
-void test_indexer();
-void test_searcher();
-void test_json();
-void test_json_index();
-void test_searchImpl();
 
 int main()
 {
     LOG << "begin" << END;
     __TRY__
-    //test_searchImpl();
-    //test_json();
-    test_searcher();
-    //test_chat_server(2222);
+    test_rwlock();
     __CATCH__(Exception& e)
     LOG << e.what() << END;
     __END__
@@ -165,22 +152,6 @@ int test_request(std::string sUrl, HttpResponse& stRsp, int iTimeout)
     return iRet == true ? 0 : -9;
 }
 
-void test_crawler()
-{
-    std::string sHostUrl = "http://www.reuters.com/";
-    int iArticleTrdNum = 16;
-    int iArchiveTrdNum = 2;
-    int iListTrdNum = 4;
-    int iMaxDoc = 1000000;
-    std::string sWorkPlace = "./";
-    std::set<std::string> targetArchive = {"/news/archive/worldNews",
-                                            "/news/archive/businessNews",
-                                            "/news/archive/technologyNews"};
-    MyCrawler crawler;
-    crawler.init(sHostUrl, iArticleTrdNum, iArchiveTrdNum, iListTrdNum, iMaxDoc, sWorkPlace, targetArchive);
-    crawler.run();
-}
-
 #include "ThreadSync.h"
 #include "ThreadPool.h"
 
@@ -265,7 +236,7 @@ void test_rwlock()
     
     RWLock rwlock;
     
-    FILE* file = fopen("test_log_file", "w");
+    //FILE* file = fopen("test_log_file", "w");
     
     auto th0 = [&]
     {
@@ -285,7 +256,7 @@ void test_rwlock()
             //std::cout << "th1 reading. th1 reading. th1 reading." << std::endl;
             //AtomicWrite() << "th1 reading. th1 reading. th1 reading." << std::endl;
             //fwrite(str, 1, strlen(str), stdout);
-            FLOG_INFO(file) << "th1 reading. th1 reading. th1 reading.";
+            LOG_INFO << "th1 reading. th1 reading. th1 reading.";
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
         printf("th1 exits\n");
@@ -300,7 +271,7 @@ void test_rwlock()
             //std::cout << "th2 reading. th2 reading. th2 reading." << std::endl;
             //AtomicWrite() << "th2 reading. th2 reading. th2 reading." << std::endl;
             //fwrite(str, 1, strlen(str), stdout);
-            FLOG_INFO(file) << "th2 reading. th2 reading. th2 reading.";
+            LOG_INFO << "th2 reading. th2 reading. th2 reading.";
             //sem.notify();
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
@@ -314,76 +285,7 @@ void test_rwlock()
     pool.start();
     pool.stop();
     pool.join();
-    fclose(file);
-}
-
-void test_indexer()
-{
-    /*search::InvertedIndex index1;
-    Indexer::loadHadoop(index1, "test_hadoop_index");
-    Indexer::save(index1, "test_save_index");
-    search::InvertedIndex index2;
-    Indexer::load(index2, "test_save_index");
-    assert(index1 == index2);*/
-}
-
-void test_searcher()
-{
-    Searcher searcher(4, 128);
-    searcher.load("lucene_json_index", "docs.txt");
-    searcher.start();
-    std::vector<result_t> res;
-    searcher.doSearchAsyn({"china"}, 10, [](std::vector<result_t> res){std::cout << search::toJson(res) << std::endl;});
-    searcher.doSearchAsyn({"china", "economy"}, 10, [](std::vector<result_t> res){std::cout << search::toJson(res) << std::endl;});
-    searcher.stop();
-}
-
-void test_json()
-{
-    vres_t list =
-    {
-        {"title1", "url1"},
-        {"title2", "url2"},
-        {"title3", "url3"},
-        {"title4", "url4"},
-        {"title5", "url5"},
-        {"title6", "url6"},
-        {"title7", "url7"},
-        {"title8", "url8"},
-        {"title9", "url9"},
-        {"title10", "url10"}
-    };
-    std::string json = search::toJson(list);
-    std::cout << json << std::endl;
-}
-
-void test_json_index()
-{
-    search::InvertedIndex index;
-    LOG_INFO << "begin loading";
-    Indexer::loadJson(index, "lucene_json_index");
-    LOG_INFO << "end loading";
-    assert(index["1.19"].vhit.size() == 12);
-    assert(index["braggadocious"].vhit.size() == 3);
-    assert(index["salla"].vhit[0].docid == 10872);
-    assert(index["salla"].vhit[0].freq == 2);
-}
-
-void test_searchImpl()
-{
-    SearchImpl impl;
-    LOG_INFO << "begin loading";
-    impl.load("lucene_json_index", "docs.txt");
-    LOG_INFO << "end loading";
-    std::vector<result_t> result;
-    
-    LOG_INFO << "begin searching";
-    impl.doSearch({"china"}, 10, result);
-    LOG_INFO << "end searching";
-    result.clear();
-    LOG_INFO << "begin searching";
-    impl.doSearch({"china", "economy"}, 10, result);
-    LOG_INFO << "end searching";
+    //fclose(file);
 }
 
 //================================================
