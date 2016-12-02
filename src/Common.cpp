@@ -78,7 +78,7 @@ std::string Common::toupper(const std::string &s)
         ch = ::toupper(ch);
     }
     
-    return std::move(str);
+    return str;
 }
 
 void Common::toupper(std::string &s)
