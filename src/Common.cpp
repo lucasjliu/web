@@ -71,12 +71,148 @@ std::string Common::now2str(const std::string &sFormat)
 
 std::string Common::toupper(const std::string &s)
 {
-    std::string sString = s;
+    std::string str = s;
     
-    for (std::string::iterator iter = sString.begin(); iter != sString.end(); ++iter)
+    for (char& ch : str)
     {
-        *iter = ::toupper(*iter);
+        ch = ::toupper(ch);
     }
     
-    return sString;
+    return std::move(str);
+}
+
+void Common::toupper(std::string &s)
+{
+    for (char& ch : s)
+    {
+        ch = ::toupper(ch);
+    }
+}
+
+std::string Common::tolower(const std::string &s)
+{
+    std::string str = s;
+    
+    for (char& ch : str)
+    {
+        ch = ::tolower(ch);
+    }
+    
+    return str;
+}
+
+void Common::tolower(std::string &s)
+{
+    for (char& ch : s)
+    {
+        ch = ::tolower(ch);
+    }
+}
+
+std::string Common::replace(const std::string &sString, const std::string &sSrc, const std::string &sDest)
+{
+    if(sSrc.empty())
+    {
+        return sString;
+    }
+    
+    std::string sBuf = sString;
+    
+    std::string::size_type pos = 0;
+    
+    while( (pos = sBuf.find(sSrc, pos)) != std::string::npos)
+    {
+        sBuf.replace(pos, sSrc.length(), sDest);
+        pos += sDest.length();
+    }
+    
+    return sBuf;
+}
+
+void Common::replace(std::string &sBuf, const std::string &sSrc, const std::string &sDest)
+{
+    if(sSrc.empty())
+    {
+        return;
+    }
+    
+    std::string::size_type pos = 0;
+    
+    while( (pos = sBuf.find(sSrc, pos)) != std::string::npos)
+    {
+        sBuf.replace(pos, sSrc.length(), sDest);
+        pos += sDest.length();
+    }
+}
+
+bool Common::divstr(const std::string& sStr,
+                    const std::string &sSep,
+                    std::string& sDest1,
+                    std::string& sDest2)
+{
+    std::string::size_type pos = sStr.find_first_of(sSep);
+    
+    if (pos == std::string::npos)
+    {
+        return false;
+    }
+    
+    sDest1 = sStr.substr(0, pos);
+    sDest2 = sStr.substr(pos + 1);
+    
+    return true;
+}
+
+template<>
+std::vector<std::string> Common::sepstr(const std::string &sStr,
+                                        const std::string &sSep,
+                                        bool withEmpty)
+{
+    std::vector<std::string> vt;
+    
+    std::string::size_type pos = 0;
+    std::string::size_type pos1 = 0;
+    
+    while(true)
+    {
+        std::string s;
+        pos1 = sStr.find_first_of(sSep, pos);
+        if(pos1 == std::string::npos)
+        {
+            if(pos + 1 <= sStr.length())
+            {
+                s = sStr.substr(pos);
+            }
+        }
+        else if(pos1 == pos)
+        {
+            s = "";
+        }
+        else
+        {
+            s = sStr.substr(pos, pos1 - pos);
+            pos = pos1;
+        }
+        
+        if(withEmpty)
+        {
+            vt.push_back((std::move(s)));
+        }
+        else
+        {
+            if(!s.empty())
+            {
+                vt.push_back(std::move(s));
+            }
+        }
+        
+        if(pos1 == std::string::npos)
+        {
+            break;
+        }
+        
+        pos++;
+    }
+    
+    return vt;
 }
