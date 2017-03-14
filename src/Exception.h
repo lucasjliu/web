@@ -10,6 +10,7 @@
 
 #include <exception>
 #include <string>
+#include <cstring>
 #include <cerrno>
 #include <execinfo.h>
 

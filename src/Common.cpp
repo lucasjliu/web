@@ -7,6 +7,7 @@
 #include "Common.h"
 #include <string>
 #include <sys/time.h>
+#include <utility>
 
 std::string Common::trim(const std::string& str, 
                          const std::string& s,
@@ -78,7 +79,7 @@ std::string Common::toupper(const std::string &s)
         ch = ::toupper(ch);
     }
     
-    return str;
+    return std::move(str);
 }
 
 void Common::toupper(std::string &s)
@@ -98,7 +99,7 @@ std::string Common::tolower(const std::string &s)
         ch = ::tolower(ch);
     }
     
-    return str;
+    return std::move(str);
 }
 
 void Common::tolower(std::string &s)
@@ -126,7 +127,7 @@ std::string Common::replace(const std::string &sString, const std::string &sSrc,
         pos += sDest.length();
     }
     
-    return sBuf;
+    return std::move(sBuf);
 }
 
 void Common::replace(std::string &sBuf, const std::string &sSrc, const std::string &sDest)
@@ -214,5 +215,5 @@ std::vector<std::string> Common::sepstr(const std::string &sStr,
         pos++;
     }
     
-    return vt;
+    return std::move(vt);
 }

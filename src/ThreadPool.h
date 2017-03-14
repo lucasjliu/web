@@ -13,9 +13,9 @@
 #include <utility>
 #include <cstdlib>
 #include <functional>
+#include <thread>
 
 #include "Common.h"
-#include "ThreadSync.h"
 
 template<typename T>
 class LFQueue : public Noncopyable
@@ -27,29 +27,38 @@ class LFQueue : public Noncopyable
     };
     typedef Node* NodePtr;
     typedef std::atomic<size_t> Seq;
+
 public:
     LFQueue(size_t size);
+
     ~LFQueue();
+
     bool push(const T& data);
-    template<typename... Args>  
-    bool emplace(Args&&... args)
-    {
-        return push(T(std::forward<Args>(args)...));
-    }
+
     bool pop(T& data);
+
+    template<typename... Args>  
+    bool emplace(Args&&... args);
+
     size_t size() const;
+
 protected:
     //ring buffer
     std::function<size_t(const Seq&)> _trunc;
+
     static constexpr size_t iCacheLine = 64;
+
     #define Alignas alignas(iCacheLine)
+
 private:
     const size_t    _iSize;
     const size_t    _iMask;
     NodePtr         _pBuf;
+
     //frequently modified data
     Alignas Seq     _seqHead;
     Alignas Seq     _seqTail;
+
     //separate _seqTail from adjacent allocations
     char            _padding[iCacheLine - sizeof(_seqTail)];
 };
@@ -60,12 +69,18 @@ class ThreadPool
 public:
     ThreadPool(size_t thNum, size_t qSize, bool bStart = true);
     ~ThreadPool() {}
+
     void start();
     void stop();
     bool isStop();
     void join();
+
     template<typename Func, typename... Args>
     bool addTask(Func&& func, Args&&... args);
+
+    template<typename Func, typename... Args>
+    bool addTask(const Func& func, const Args&... args);
+
 private:
     std::vector<std::thread> _threads;
     LFQueue<Task>            _tasks;
@@ -80,9 +95,18 @@ bool ThreadPool::addTask(Func&& func, Args&&... args)
         return false;
     }
     //using return_type = typename std::result_of<Func(Args...)>::type;
-    auto task = std::make_shared<Task>
-        (std::bind(std::forward<Func>(func), std::forward<Args>(args)...));
-    return _tasks.push([task](){(*task)();});
+    return _tasks.push(std::bind(std::forward<Func>(func), std::forward<Args>(args)...));
+}
+
+template<typename Func, typename... Args>
+bool ThreadPool::addTask(const Func& func, const Args&... args)
+{
+    if (isStop())
+    {
+        return false;
+    }
+    //using return_type = typename std::result_of<Func(Args...)>::type;
+    return _tasks.push(std::bind(func, args...));
 }
 
 template<typename T>
@@ -145,6 +169,13 @@ bool LFQueue<T>::push(const T& data)
 }
 
 template<typename T>
+template<typename... Args>  
+bool LFQueue<T>::emplace(Args&&... args)
+{
+    return push(T(std::forward<Args>(args)...));
+}
+
+template<typename T>
 bool LFQueue<T>::pop(T& data)
 {
     size_t tail;
@@ -172,7 +203,7 @@ bool LFQueue<T>::pop(T& data)
         }
     }
 }
-    
+
 template<typename T>
 size_t LFQueue<T>::size() const
 {
